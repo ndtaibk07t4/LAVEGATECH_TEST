@@ -66,10 +66,10 @@ fun SignInScreen(
                 isLoading = uiState.isLoading,
                 onClick = { viewModel.signInWithGoogle() }
             )
-            if (uiState.errorMessage != null) {
+            uiState.errorMessage?.let { errorMessage ->
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    text = uiState.errorMessage!!,
+                    text = errorMessage,
                     color = Color.Red,
                     style = MaterialTheme.typography.bodyMedium,
                     textAlign = TextAlign.Center
