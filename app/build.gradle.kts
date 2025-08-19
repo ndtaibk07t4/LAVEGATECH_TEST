@@ -65,6 +65,7 @@ dependencies {
     implementation(libs.play.services.auth)
     implementation(libs.androidx.security.crypto)
     implementation(libs.androidx.browser)
+    implementation(libs.coil.compose)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

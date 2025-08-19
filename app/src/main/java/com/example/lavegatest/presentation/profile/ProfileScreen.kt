@@ -12,12 +12,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -28,10 +25,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
 
 @Composable
 fun ProfileScreen(
@@ -66,23 +65,17 @@ fun ProfileScreen(
                 color = Color.Black
             )
             Spacer(modifier = Modifier.height(48.dp))
-            Box(
+            AsyncImage(
                 modifier = Modifier
                     .size(120.dp)
-                    .clip(CircleShape)
-                    .background(Color(0xFF4285F4)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    modifier = Modifier.size(60.dp),
-                    imageVector = Icons.Default.Person,
-                    contentDescription = "User Avatar",
-                    tint = Color.White
-                )
-            }
+                    .clip(CircleShape),
+                model = uiState.userProfile?.picture,
+                contentDescription = "Profile Picture",
+                contentScale = ContentScale.Crop
+            )
             Spacer(modifier = Modifier.height(32.dp))
             Text(
-                text = uiState.userName,
+                text = uiState.userProfile?.name.orEmpty(),
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center,
@@ -90,7 +83,7 @@ fun ProfileScreen(
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = uiState.userEmail,
+                text = uiState.userProfile?.email.orEmpty(),
                 style = MaterialTheme.typography.bodyLarge,
                 color = Color.Black,
                 textAlign = TextAlign.Center
