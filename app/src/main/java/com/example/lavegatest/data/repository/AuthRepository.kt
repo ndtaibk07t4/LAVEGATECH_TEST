@@ -6,10 +6,12 @@ import com.example.lavegatest.auth.OAuthState
 import com.example.lavegatest.auth.OAuthStateManager
 import com.example.lavegatest.auth.TokenStorage
 import com.example.lavegatest.auth.model.UserProfile
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import androidx.core.net.toUri
+import javax.inject.Inject
 
 interface AuthRepository {
     val isSignedIn: Flow<Boolean>
@@ -21,8 +23,8 @@ interface AuthRepository {
     suspend fun refreshUserProfile(): Result<UserProfile>
 }
 
-class AuthRepositoryImpl(
-    private val context: Context
+class AuthRepositoryImpl @Inject constructor(
+    @ApplicationContext private val context: Context
 ) : AuthRepository {
     
     private val oAuthService = OAuthService(context)

@@ -1,16 +1,17 @@
 package com.example.lavegatest.auth
 
-import android.content.Context
 import com.example.lavegatest.data.repository.AuthRepository
-import com.example.lavegatest.data.repository.AuthRepositoryImpl
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class AuthManager(context: Context) {
-    
-    private val authRepository: AuthRepository = AuthRepositoryImpl(context)
+@Singleton
+class AuthManager @Inject constructor(
+    private val authRepository: AuthRepository
+) {
     
     private val _oAuthCallbacks = MutableStateFlow("")
     val oAuthCallbacks: SharedFlow<String> = _oAuthCallbacks.asSharedFlow()

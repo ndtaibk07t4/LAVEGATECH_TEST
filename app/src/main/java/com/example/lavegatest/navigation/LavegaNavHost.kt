@@ -11,7 +11,8 @@ import com.example.lavegatest.auth.AuthManager
 import com.example.lavegatest.presentation.auth.SignInScreen
 import com.example.lavegatest.presentation.auth.SignInViewModel
 import com.example.lavegatest.presentation.profile.ProfileScreen
-import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.lavegatest.presentation.profile.ProfileViewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 
 @Composable
 fun LavegaNavHost(
@@ -39,7 +40,7 @@ fun LavegaNavHost(
         startDestination = startDestination
     ) {
         composable(NavRoutes.SignIn.route) {
-            val viewModel: SignInViewModel = viewModel()
+            val viewModel: SignInViewModel = hiltViewModel()
             val oAuthCallbacks by authManager.oAuthCallbacks.collectAsState(initial = "")
             
             LaunchedEffect(oAuthCallbacks) {
@@ -53,7 +54,8 @@ fun LavegaNavHost(
                     navController.navigate(NavRoutes.Profile.route) {
                         popUpTo(NavRoutes.SignIn.route) { inclusive = true }
                     }
-                }
+                },
+                viewModel = viewModel
             )
         }
 

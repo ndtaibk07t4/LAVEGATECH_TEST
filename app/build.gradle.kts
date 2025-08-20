@@ -5,6 +5,8 @@ val localProperties = Properties().apply { load(project.rootProject.file("local.
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.hilt)
+    alias(libs.plugins.ksp)
 }
 
 android {
@@ -67,6 +69,9 @@ dependencies {
     implementation(libs.androidx.security.crypto)
     implementation(libs.androidx.browser)
     implementation(libs.coil.compose)
+    implementation(libs.hilt.android)
+    implementation(libs.hilt.navigation.compose)
+    ksp(libs.hilt.compiler)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

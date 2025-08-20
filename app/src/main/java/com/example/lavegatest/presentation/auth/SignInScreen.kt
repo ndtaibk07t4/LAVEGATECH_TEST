@@ -32,7 +32,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 @Composable
 fun SignInScreen(
     onCompletedAction: () -> Unit,
-    viewModel: SignInViewModel = viewModel()
+    viewModel: SignInViewModel
 ) {
     val uiState by viewModel.uiState.collectAsState()
 

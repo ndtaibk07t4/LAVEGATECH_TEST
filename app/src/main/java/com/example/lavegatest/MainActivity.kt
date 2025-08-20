@@ -14,16 +14,18 @@ import androidx.navigation.compose.rememberNavController
 import com.example.lavegatest.auth.AuthManager
 import com.example.lavegatest.navigation.LavegaNavHost
 import com.example.lavegatest.ui.theme.LavegatestTheme
+import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
-    private lateinit var authManager: AuthManager
+    @Inject
+    lateinit var authManager: AuthManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-
-        authManager = AuthManager(this)
 
         // Handle OAuth callback from intent
         handleOAuthCallback(intent)

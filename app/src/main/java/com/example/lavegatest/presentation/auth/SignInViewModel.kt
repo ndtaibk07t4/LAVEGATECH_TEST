@@ -1,14 +1,14 @@
 package com.example.lavegatest.presentation.auth
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.lavegatest.data.repository.AuthRepository
-import com.example.lavegatest.data.repository.AuthRepositoryImpl
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 data class SignInUiState(
     val isLoading: Boolean = false,
@@ -16,9 +16,10 @@ data class SignInUiState(
     val errorMessage: String? = null
 )
 
-class SignInViewModel(application: Application) : AndroidViewModel(application) {
-    
-    private val authRepository: AuthRepository = AuthRepositoryImpl(application)
+@HiltViewModel
+class SignInViewModel @Inject constructor(
+    private val authRepository: AuthRepository
+) : ViewModel() {
     
     private val _uiState = MutableStateFlow(SignInUiState())
     val uiState: StateFlow<SignInUiState> = _uiState.asStateFlow()
