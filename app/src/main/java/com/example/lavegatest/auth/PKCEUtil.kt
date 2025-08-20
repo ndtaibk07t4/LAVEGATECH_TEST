@@ -32,4 +32,18 @@ object PKCEUtil {
         }
         return state.toString()
     }
+    
+    fun validateCodeVerifier(codeVerifier: String): Boolean {
+        if (codeVerifier.length < 43 || codeVerifier.length > 128) {
+            return false
+        }
+        
+        for (char in codeVerifier) {
+            if (!allowedChars.contains(char)) {
+                return false
+            }
+        }
+        
+        return true
+    }
 }

@@ -1,23 +1,19 @@
 package com.example.lavegatest
 
 import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.lifecycle.lifecycleScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.rememberNavController
 import com.example.lavegatest.auth.AuthManager
 import com.example.lavegatest.navigation.LavegaNavHost
 import com.example.lavegatest.ui.theme.LavegatestTheme
-import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
 
@@ -46,10 +42,8 @@ class MainActivity : ComponentActivity() {
 
     private fun handleOAuthCallback(intent: Intent?) {
         intent?.data?.let { uri ->
-            if (uri.scheme == "com.example.lavegatest") {
-                lifecycleScope.launch {
-                    authManager.handleOAuthCallback(uri.toString())
-                }
+            if (uri.host == "fir-demo-b9ae6.web.app") {
+                authManager.handleOAuthCallback(uri.toString())
             }
         }
     }

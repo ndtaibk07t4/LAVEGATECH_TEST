@@ -60,7 +60,6 @@ class TokenStorage(context: Context) {
             put("given_name", profile.givenName)
             put("family_name", profile.familyName)
             put("picture", profile.picture)
-            put("locale", profile.locale)
         }
         encryptedPrefs.edit { putString(KEY_USER_PROFILE, jsonObject.toString()) }
     }

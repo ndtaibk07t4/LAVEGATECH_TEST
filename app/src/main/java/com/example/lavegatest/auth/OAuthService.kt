@@ -47,95 +47,109 @@ class OAuthService(private val context: Context) {
     }
     
     suspend fun exchangeCodeForToken(authorizationCode: String, codeVerifier: String): Result<TokenResponse> {
-        return try {
-            val url = URL(OAuthConfig.GOOGLE_TOKEN_ENDPOINT)
-            val connection = withContext(Dispatchers.IO) {
-                url.openConnection()
-            } as HttpURLConnection
-            
-            connection.requestMethod = "POST"
-            connection.doOutput = true
-            connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded")
-            
-            val postData = buildString {
-                append("client_id=${URLEncoder.encode(BuildConfig.GOOGLE_CLIENT_ID, "UTF-8")}")
-                append("&code=${URLEncoder.encode(authorizationCode, "UTF-8")}")
-                append("&code_verifier=${URLEncoder.encode(codeVerifier, "UTF-8")}")
-                append("&grant_type=authorization_code")
-                append("&redirect_uri=${URLEncoder.encode(OAuthConfig.REDIRECT_URI, "UTF-8")}")
+        return withContext(Dispatchers.IO) {
+            try {
+                val url = URL(OAuthConfig.GOOGLE_TOKEN_ENDPOINT)
+                val connection = withContext(Dispatchers.IO) {
+                    url.openConnection()
+                } as HttpURLConnection
+
+                connection.requestMethod = "POST"
+                connection.doOutput = true
+                connection.connectTimeout = 30000 // 30 seconds
+                connection.readTimeout = 30000 // 30 seconds
+                connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded")
+
+                val postData = buildString {
+                    append("client_id=${URLEncoder.encode(BuildConfig.GOOGLE_CLIENT_ID, "UTF-8")}")
+                    append("&client_secret=${URLEncoder.encode(BuildConfig.GOOGLE_CLIENT_SECRET, "UTF-8")}")
+                    append("&code=${URLEncoder.encode(authorizationCode, "UTF-8")}")
+                    append("&code_verifier=${URLEncoder.encode(codeVerifier, "UTF-8")}")
+                    append("&grant_type=authorization_code")
+                    append("&redirect_uri=${URLEncoder.encode(OAuthConfig.REDIRECT_URI, "UTF-8")}")
+                }
+
+                OutputStreamWriter(connection.outputStream).use { writer ->
+                    writer.write(postData)
+                    writer.flush()
+                }
+
+                val responseCode = connection.responseCode
+                val response = if (responseCode == HttpURLConnection.HTTP_OK) {
+                    connection.inputStream
+                } else {
+                    connection.errorStream
+                }
+
+                val responseBody = BufferedReader(InputStreamReader(response, StandardCharsets.UTF_8)).use { reader ->
+                    reader.readText()
+                }
+
+                if (responseCode == HttpURLConnection.HTTP_OK) {
+                    val jsonObject = JSONObject(responseBody)
+                    val tokenResponse = TokenResponse.fromJson(jsonObject)
+                    saveTokens(tokenResponse)
+                    Result.success(tokenResponse)
+                } else {
+                    val jsonObject = JSONObject(responseBody)
+                    val error = OAuthError.fromJson(jsonObject)
+                    Result.failure(Exception("OAuth error: ${error.error} - ${error.errorDescription}"))
+                }
+
+            } catch (e: Exception) {
+                Result.failure(e)
             }
-            
-            OutputStreamWriter(connection.outputStream).use { writer ->
-                writer.write(postData)
-                writer.flush()
-            }
-            
-            val responseCode = connection.responseCode
-            val response = if (responseCode == HttpURLConnection.HTTP_OK) {
-                connection.inputStream
-            } else {
-                connection.errorStream
-            }
-            
-            val responseBody = BufferedReader(InputStreamReader(response, StandardCharsets.UTF_8)).use { reader ->
-                reader.readText()
-            }
-            
-            if (responseCode == HttpURLConnection.HTTP_OK) {
-                val jsonObject = JSONObject(responseBody)
-                val tokenResponse = TokenResponse.fromJson(jsonObject)
-                saveTokens(tokenResponse)
-                Result.success(tokenResponse)
-            } else {
-                val jsonObject = JSONObject(responseBody)
-                val error = OAuthError.fromJson(jsonObject)
-                Result.failure(Exception("OAuth error: ${error.error} - ${error.errorDescription}"))
-            }
-            
-        } catch (e: Exception) {
-            Result.failure(e)
         }
     }
     
     suspend fun fetchUserProfile(): Result<UserProfile> {
-        return try {
-            val accessToken = tokenStorage.getAccessToken()
-            if (accessToken.isNullOrEmpty()) {
-                return Result.failure(Exception("No access token available"))
+        return withContext(Dispatchers.IO) {
+            try {
+                val accessToken = tokenStorage.getAccessToken()
+                if (accessToken.isNullOrEmpty()) {
+                    return@withContext Result.failure(Exception("No access token available"))
+                }
+
+                val url = URL(OAuthConfig.GOOGLE_USER_INFO_ENDPOINT)
+                val connection = withContext(Dispatchers.IO) {
+                    url.openConnection()
+                } as HttpURLConnection
+
+                connection.requestMethod = "GET"
+                connection.connectTimeout = 30000 // 30 seconds
+                connection.readTimeout = 30000 // 30 seconds
+                connection.setRequestProperty("Authorization", "Bearer $accessToken")
+
+                val responseCode = connection.responseCode
+                val response = if (responseCode == HttpURLConnection.HTTP_OK) {
+                    connection.inputStream
+                } else {
+                    connection.errorStream
+                }
+
+                val responseBody = BufferedReader(
+                    InputStreamReader(
+                        response,
+                        StandardCharsets.UTF_8
+                    )
+                ).use { reader ->
+                    reader.readText()
+                }
+
+                if (responseCode == HttpURLConnection.HTTP_OK) {
+                    val jsonObject = JSONObject(responseBody)
+                    val userProfile = UserProfile.fromJson(jsonObject)
+                    tokenStorage.saveUserProfile(userProfile)
+                    Result.success(userProfile)
+                } else {
+                    val jsonObject = JSONObject(responseBody)
+                    val error = OAuthError.fromJson(jsonObject)
+                    Result.failure(Exception("API error: ${error.error} - ${error.errorDescription}"))
+                }
+
+            } catch (e: Exception) {
+                Result.failure(e)
             }
-            
-            val url = URL(OAuthConfig.GOOGLE_USER_INFO_ENDPOINT)
-            val connection = withContext(Dispatchers.IO) {
-                url.openConnection()
-            } as HttpURLConnection
-            
-            connection.requestMethod = "GET"
-            connection.setRequestProperty("Authorization", "Bearer $accessToken")
-            
-            val responseCode = connection.responseCode
-            val response = if (responseCode == HttpURLConnection.HTTP_OK) {
-                connection.inputStream
-            } else {
-                connection.errorStream
-            }
-            
-            val responseBody = BufferedReader(InputStreamReader(response, StandardCharsets.UTF_8)).use { reader ->
-                reader.readText()
-            }
-            
-            if (responseCode == HttpURLConnection.HTTP_OK) {
-                val jsonObject = JSONObject(responseBody)
-                val userProfile = UserProfile.fromJson(jsonObject)
-                tokenStorage.saveUserProfile(userProfile)
-                Result.success(userProfile)
-            } else {
-                val jsonObject = JSONObject(responseBody)
-                val error = OAuthError.fromJson(jsonObject)
-                Result.failure(Exception("API error: ${error.error} - ${error.errorDescription}"))
-            }
-            
-        } catch (e: Exception) {
-            Result.failure(e)
         }
     }
     

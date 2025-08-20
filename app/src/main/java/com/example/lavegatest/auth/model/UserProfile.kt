@@ -9,8 +9,7 @@ data class UserProfile(
     val name: String,
     val givenName: String,
     val familyName: String,
-    val picture: String,
-    val locale: String
+    val picture: String
 ) {
     companion object {
         fun fromJson(json: JSONObject): UserProfile {
@@ -21,8 +20,7 @@ data class UserProfile(
                 name = json.getString("name"),
                 givenName = json.getString("given_name"),
                 familyName = json.getString("family_name"),
-                picture = json.getString("picture"),
-                locale = json.getString("locale")
+                picture = json.getString("picture")
             )
         }
     }

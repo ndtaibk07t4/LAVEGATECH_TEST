@@ -20,6 +20,7 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField("String", "GOOGLE_CLIENT_ID", "\"${localProperties.getProperty("google_client_id")}\"")
+        buildConfigField("String", "GOOGLE_CLIENT_SECRET", "\"${localProperties.getProperty("google_client_secret")}\"")
     }
 
     buildTypes {

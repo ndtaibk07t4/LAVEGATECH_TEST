@@ -11,7 +11,7 @@ object OAuthConfig {
     const val ACCESS_TYPE = "offline"
     
     // configuration
-    const val REDIRECT_URI = "com.example.lavegatest:/oauth2redirect"
+    const val REDIRECT_URI = "https://fir-demo-b9ae6.web.app/oauth2redirect"
     const val STATE_PARAMETER = "state"
     const val CODE_VERIFIER_LENGTH = 128
     const val CODE_CHALLENGE_METHOD = "S256"

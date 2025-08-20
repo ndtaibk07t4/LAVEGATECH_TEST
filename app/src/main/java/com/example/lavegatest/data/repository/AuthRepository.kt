@@ -3,11 +3,13 @@ package com.example.lavegatest.data.repository
 import android.content.Context
 import com.example.lavegatest.auth.OAuthService
 import com.example.lavegatest.auth.OAuthState
+import com.example.lavegatest.auth.OAuthStateManager
 import com.example.lavegatest.auth.TokenStorage
 import com.example.lavegatest.auth.model.UserProfile
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import androidx.core.net.toUri
 
 interface AuthRepository {
     val isSignedIn: Flow<Boolean>
@@ -25,7 +27,11 @@ class AuthRepositoryImpl(
     
     private val oAuthService = OAuthService(context)
     private val tokenStorage = TokenStorage(context)
-    private var currentOAuthState: OAuthState? = null
+    
+    init {
+        // Initialize OAuth state manager
+        OAuthStateManager.initialize(context)
+    }
     
     private val _isSignedIn = MutableStateFlow(tokenStorage.isTokenValid())
     override val isSignedIn: Flow<Boolean> = _isSignedIn.asStateFlow()
@@ -42,10 +48,12 @@ class AuthRepositoryImpl(
     
     override suspend fun startSignIn(): Result<String> {
         return try {
-            currentOAuthState = OAuthState.create()
+            val oauthState = OAuthStateManager.createOAuthState()
+            OAuthStateManager.saveOAuthState(context, oauthState)
+            
             val authUrl = oAuthService.buildAuthorizationUrl(
-                currentOAuthState!!.codeVerifier,
-                currentOAuthState!!.state
+                oauthState.codeVerifier,
+                oauthState.state
             )
             oAuthService.launchAuthorization(authUrl)
             Result.success("Sign-in process started")
@@ -56,7 +64,7 @@ class AuthRepositoryImpl(
     
     override suspend fun handleOAuthCallback(uri: String): Result<UserProfile> {
         return try {
-            val uriObj = android.net.Uri.parse(uri)
+            val uriObj = uri.toUri()
             val code = uriObj.getQueryParameter("code")
             val state = uriObj.getQueryParameter("state")
             val error = uriObj.getQueryParameter("error")
@@ -68,14 +76,19 @@ class AuthRepositoryImpl(
             if (code == null || state == null) {
                 return Result.failure(Exception("Invalid OAuth callback"))
             }
-            
-            val oauthState = currentOAuthState
+
+            val oauthState = OAuthStateManager.getCurrentOAuthState()
             if (oauthState == null || !oauthState.isValid()) {
                 return Result.failure(Exception("OAuth state expired or invalid"))
             }
             
+            
+            if (!oauthState.isValid()) {
+                return Result.failure(Exception("OAuth state expired - please try signing in again"))
+            }
+            
             if (state != oauthState.state) {
-                return Result.failure(Exception("State mismatch"))
+                return Result.failure(Exception("State mismatch - possible CSRF attack"))
             }
             
             val tokenResult = oAuthService.exchangeCodeForToken(code, oauthState.codeVerifier)
@@ -86,6 +99,8 @@ class AuthRepositoryImpl(
             val profileResult = oAuthService.fetchUserProfile()
             if (profileResult.isSuccess) {
                 _isSignedIn.value = true
+                OAuthStateManager.clearOAuthState()
+                OAuthStateManager.clearStoredOAuthState(context)
                 Result.success(profileResult.getOrThrow())
             } else {
                 Result.failure(profileResult.exceptionOrNull() ?: Exception("Failed to fetch profile"))
@@ -97,7 +112,8 @@ class AuthRepositoryImpl(
     
     override suspend fun signOut() {
         tokenStorage.clearTokens()
-        currentOAuthState = null
+        OAuthStateManager.clearOAuthState()
+        OAuthStateManager.clearStoredOAuthState(context)
         _isSignedIn.value = false
     }
     
@@ -108,4 +124,6 @@ class AuthRepositoryImpl(
             Result.failure(Exception("User not signed in"))
         }
     }
+    
+
 }
